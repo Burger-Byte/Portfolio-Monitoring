@@ -24,4 +24,7 @@ scrape_configs:
     static_configs:
       - targets: ['jaquesburger.com:443']
     metrics_path: '/metrics'
+    scheme: https
     scrape_interval: 10s
+    tls_config:
+      insecure_skip_verify: true
