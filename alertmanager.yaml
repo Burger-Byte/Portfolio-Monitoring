@@ -1,8 +1,8 @@
 global:
   smtp_smarthost: 'smtp.gmail.com:587'
-  smtp_from: 'your-email@gmail.com'
-  smtp_auth_username: 'your-email@gmail.com'
-  smtp_auth_password: 'your-app-password'
+  smtp_from: '${ALERTMANAGER_EMAIL}'
+  smtp_auth_username: '${ALERTMANAGER_EMAIL}'
+  smtp_auth_password: '${ALERTMANAGER_PASSWORD}'
 
 route:
   group_by: ['alertname']

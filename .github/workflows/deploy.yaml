@@ -44,13 +44,23 @@ jobs:
         sudo mkdir -p /opt/monitoring
         sudo chown $USER:$USER /opt/monitoring
     
-    - name: Copy monitoring files
+    - name: Copy monitoring configuration files
       run: |
         cp docker-compose.yaml /opt/monitoring/
         cp prometheus.yaml /opt/monitoring/
         cp alert_rules.yaml /opt/monitoring/
         cp alertmanager.yaml /opt/monitoring/
         echo "✅ Copied monitoring configuration files"
+        ls -la /opt/monitoring/
+
+    - name: Create environment file with secrets
+      run: |
+        cd /opt/monitoring
+        echo "GRAFANA_ADMIN_PASSWORD=${{ secrets.GRAFANA_ADMIN_PASSWORD }}" > .env
+        echo "ALERTMANAGER_EMAIL=${{ secrets.ALERTMANAGER_EMAIL }}" >> .env
+        echo "ALERTMANAGER_PASSWORD=${{ secrets.ALERTMANAGER_PASSWORD }}" >> .env
+        echo "✅ Environment file created"
+        echo "Environment variables set: $(grep -c '=' .env)"
     
     - name: Pull latest Docker image
       run: |
