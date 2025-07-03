@@ -1,0 +1,71 @@
+
+name: Deploy Monitoring Stack
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Create monitoring directory
+      run: |
+        sudo mkdir -p /opt/monitoring
+        sudo chown $USER:$USER /opt/monitoring
+    
+    - name: Copy monitoring files
+      run: |
+        cp docker-compose.yml /opt/monitoring/
+        cp prometheus.yml /opt/monitoring/
+        cp alert_rules.yml /opt/monitoring/
+        cp alertmanager.yml /opt/monitoring/
+        echo "✅ Copied monitoring configuration files"
+    
+    - name: Deploy monitoring stack
+      run: |
+        cd /opt/monitoring
+        
+        # Stop existing monitoring containers
+        docker-compose down || true
+        
+        # Start monitoring stack
+        docker-compose up -d
+        
+        # Clean up old images
+        docker image prune -f
+    
+    - name: Health check monitoring services
+      run: |
+        sleep 30
+        
+        # Check Prometheus
+        if curl -f http://localhost:9090/-/healthy; then
+          echo "✅ Prometheus healthy"
+        else
+          echo "❌ Prometheus not healthy"
+          exit 1
+        fi
+        
+        # Check Grafana
+        if curl -f http://localhost:3000/api/health; then
+          echo "✅ Grafana healthy"
+        else
+          echo "❌ Grafana not healthy"
+          exit 1
+        fi
+        
+        # Check if portfolio app is being scraped
+        if curl -s http://localhost:9090/api/v1/targets | grep -q "portfolio-app"; then
+          echo "✅ Portfolio app target configured"
+        else
+          echo "⚠️  Portfolio app target not found"
+        fi
+        
+        echo "🎉 Monitoring stack deployed successfully!"
+        echo "📊 Grafana: http://$(hostname -I | awk '{print $1}'):3000"
+        echo "📈 Prometheus: http://$(hostname -I | awk '{print $1}'):9090"
